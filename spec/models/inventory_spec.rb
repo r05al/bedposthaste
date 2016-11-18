@@ -23,11 +23,4 @@ RSpec.describe Inventory, type: :model do
 
 		expect(inv.quantity).to be == 0
 	end
-	
-	describe "update" do
-		it "updates inventory records" do
-
-		end
-
-	end
 end

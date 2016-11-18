@@ -19,5 +19,4 @@ RSpec.describe Warehouse, type: :model do
 		it { should have_many(:products).through(:inventory)}
 		it { should have_many(:inventory)}
 	end
-
 end

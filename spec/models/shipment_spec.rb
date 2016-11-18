@@ -1,6 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe Shipment, type: :model do
+
+	it "has a valid factory" do
+	  expect(build(:shipment)).to be_valid
+	end
+
 	describe "zip" do
 		it { should validate_presence_of(:zip) }
 	end

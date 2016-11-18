@@ -8,8 +8,8 @@ RSpec.describe Dispatcher, type: :model do
 	let!(:wh3) { FactoryGirl.create(:warehouse) }
 	let!(:wh4) { FactoryGirl.create(:warehouse) }
 	#products
-	let(:p1) { FactoryGirl.create(:product) }
-	let(:p2) { FactoryGirl.create(:product) }
+	let!(:p1) { FactoryGirl.create(:product) }
+	let!(:p2) { FactoryGirl.create(:product) }
 	#shipments
 	let!(:sh1) { FactoryGirl.create(:shipment) }
 	let!(:sh2) { FactoryGirl.create(:shipment) }
@@ -34,7 +34,6 @@ RSpec.describe Dispatcher, type: :model do
 	end
 	
 	describe "#allocate" do
-
 		it "assigns shipments to warehouses" do
 			d = Dispatcher.new
 
@@ -68,7 +67,6 @@ RSpec.describe Dispatcher, type: :model do
 	end	
 
 	describe "#assign checks to the closest warehouses based on zip code" do
-
 		context "when it identifies a warehouse with all shipment line items" do
 			it "returns true" do
 				LineItem.create(shipment_id: sh1.id, product_id: p1.id, quantity: 1)
