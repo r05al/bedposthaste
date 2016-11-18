@@ -1,28 +1,26 @@
-== README
+== BedPostHaste.
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+There is a Dispatcher which collects all shipments which aren’t assigned to a warehouse
+and collects all warehouses with their respective inventories. A Dispatch instance calls
+allocate on the pending shipments collection. Allocate passes each shipment to assign.
 
-Things you may want to cover:
+Assign basically takes the shipment and the warehouse collection and compares the
+zip code of each to find the nearest, then does an inventory check to see if the shipment
+can be fulfilled. 
 
-* Ruby version
+If it can, the shipment gets assigned that warehouse id and process is called with the 
+warehouse id and shipment line items. Process goes through each line item and finds
+the respective warehouse inventory and decreases by the line item amount.
 
-* System dependencies
+It it cannot be fulfilled, reallocate is called with the shipment. This breaks the shipment
+line items into their own shipment with only themselves as line items. These new
+shipments are then assigned in the same process stated above. In the case there is not
+enough quantity in a single warehouse, these shipments are added to errors on the
+model instance.
 
-* Configuration
+Potentially build out a partials feature which takes full orders and breaks them down into
+fillable quantities and then assigns those new shipments to warehouses.
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
-
-
-Please feel free to use a different markup language if you do not plan to run
-<tt>rake doc:app</tt>.
+Tests
+RSpec, Factory Girl, Shoulda, and Faker as tools. 
+Use RSpec commands to run respective tests.
