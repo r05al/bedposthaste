@@ -17,11 +17,14 @@ RSpec.describe Dispatcher, type: :model do
 	let!(:sh4) { FactoryGirl.create(:shipment) }
 
 	context "on initalization" do
-		it "gets shipments with warehouse_id set to nil" do
+		it "gets shipments with warehouse_id set to nil and have line items" do
+			LineItem.create(shipment_id: sh1.id, product_id: p1.id, quantity: 1)
+			LineItem.create(shipment_id: sh2.id, product_id: p1.id, quantity: 1)
+			LineItem.create(shipment_id: sh3.id, product_id: p1.id, quantity: 1)
 			sh2.update(warehouse_id: wh1.id)
 			d = Dispatcher.new
 
-			expect(d.shipments).to match_array([sh1, sh3, sh4])
+			expect(d.shipments).to match_array([sh1, sh3])
 		end
 
 		it "gets warehouses ordered by zip code" do
@@ -186,6 +189,34 @@ RSpec.describe Dispatcher, type: :model do
 
 			expect(d.errors.messages[:shipments].first).to eq("Cannot fulfill full order " +
 				"of product #{not_enough.product_id} for #{not_enough.quantity} units")
+		end
+	end
+
+	describe "#partial" do
+		it "locates inventory of the line item product" do
+			Inventory.create(warehouse_id: wh1.id, product_id: p2.id, quantity: 1)
+			Inventory.create(warehouse_id: wh2.id, product_id: p2.id, quantity: 3)
+			Inventory.create(warehouse_id: wh3.id, product_id: p2.id, quantity: 12)
+			Inventory.create(warehouse_id: wh4.id, product_id: p2.id, quantity: 3)
+			li = LineItem.create(shipment_id: sh1.id, product_id: p2.id, quantity: 16)
+			d = Dispatcher.new
+
+
+			expect(d.partial(sh1)).to be true
+			expect(Inventory.where(product_id: p2.id).map(&:quantity).inject(:+)).to eq(3)
+		end		
+
+		it "returns creates a pending order with the remainder amount when insufficient" do
+			Inventory.create(warehouse_id: wh1.id, product_id: p2.id, quantity: 1)
+			Inventory.create(warehouse_id: wh2.id, product_id: p2.id, quantity: 3)
+			li = LineItem.create(shipment_id: sh1.id, product_id: p2.id, quantity: 16)
+			d = Dispatcher.new
+
+			d.partial(sh1)
+
+			expect(Inventory.where(product_id: p2.id).map(&:quantity).inject(:+)).to eq(0)
+			expect(Shipment.last.line_items.first.quantity).to eq(12)
+			expect(Shipment.last.warehouse_id).to be(nil)
 		end
 	end
 end

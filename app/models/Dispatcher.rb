@@ -4,7 +4,7 @@ class Dispatcher
 	attr_reader :shipments, :warehouses
 
 	def initialize
-		@shipments = Shipment.where(warehouse_id: nil).includes(:line_items)
+		@shipments = Shipment.joins(:line_items).where(warehouse_id: nil)
 		@warehouses = Warehouse.order(:zip).includes(:inventory) #ordered by zip
 	end
 
@@ -85,7 +85,26 @@ class Dispatcher
 		shipment.destroy
 	end
 
-	def partial
+	def partial(shipment)
+		li = shipment.line_items.first
+		units_needed = li.quantity
+		product_locations = Inventory.where(product_id: li.product_id).order(:quantity).reverse_order
+		product_locations.each do |pl|
+			s = Shipment.create(zip: shipment.zip, warehouse_id: pl.warehouse_id)
+			if units_needed > pl.quantity
+				units_needed -= pl.quantity
+				s.line_items.create(product_id: li.product_id, quantity: pl.quantity)
+				pl.update(quantity: 0)
+			else
+				remaining_inv = pl.quantity - units_needed
+				s.line_items.create(product_id: li.product_id, quantity: units_needed)
+				pl.update(quantity: remaining_inv)
+				return true
+			end
+		end
+		remainder = Shipment.create(zip: shipment.zip)
+		remainder.line_items.create(product_id: li.product_id, quantity: units_needed)
+		return false
 	end
 
 end
